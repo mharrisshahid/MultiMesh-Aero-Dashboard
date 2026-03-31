@@ -1,8 +1,13 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MultiMesh-Aero Surveillance Dashboard</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-sans); }
-.db { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 12px; background: #0d1117; min-height: 100vh; color: #e6edf3; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
+.db { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 12px; min-height: 100vh; }
 .panel { background: #161b22; border: 0.5px solid #30363d; border-radius: 8px; overflow: hidden; }
 .panel-hd { padding: 8px 12px; border-bottom: 0.5px solid #30363d; display: flex; align-items: center; gap: 8px; }
 .panel-hd .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -14,28 +19,22 @@ body { font-family: var(--font-sans); }
 .badge-live { background: #1a2e1a; color: #3fb950; border: 0.5px solid #2d5a2d; }
 .badge-proc { background: #1a1e2e; color: #388bfd; border: 0.5px solid #2d3a5a; }
 .badge-mesh { background: #2e1a1a; color: #f78166; border: 0.5px solid #5a2d2d; }
-
 .feed-box { position: relative; height: 220px; background: #0d1117; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .feed-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.92; }
 .feed-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-.tag { position: absolute; font-size: 9px; font-weight: 500; color: #3fb950; border: 1px solid #3fb950; background: rgba(13,17,23,0.7); padding: 1px 5px; border-radius: 3px; }
-
 .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
 .metric { background: #0d1117; border-radius: 6px; padding: 8px 10px; border: 0.5px solid #30363d; }
 .metric .val { font-size: 20px; font-weight: 500; color: #e6edf3; line-height: 1; }
 .metric .lbl { font-size: 10px; color: #8b949e; margin-top: 4px; }
 .metric .trend { font-size: 10px; color: #3fb950; margin-top: 2px; }
-
 .img-panel { height: 240px; background: #0d1117; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .img-panel img { width: 100%; height: 100%; object-fit: contain; background: #0d1117; }
-
 .acc-bar-wrap { padding: 10px 12px; }
 .acc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .acc-label { font-size: 11px; color: #8b949e; width: 100px; flex-shrink: 0; }
 .acc-bar-bg { flex: 1; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
 .acc-bar { height: 100%; border-radius: 4px; }
 .acc-val { font-size: 11px; color: #e6edf3; font-weight: 500; width: 42px; text-align: right; flex-shrink: 0; }
-
 .bottom-row { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
 .stat-card { background: #161b22; border: 0.5px solid #30363d; border-radius: 8px; padding: 14px 16px; }
 .stat-card .num { font-size: 26px; font-weight: 500; color: #e6edf3; }
@@ -45,26 +44,23 @@ body { font-family: var(--font-sans); }
 .blue-sub  { background: #1a1e2e; color: #388bfd; }
 .orange-sub{ background: #2e2118; color: #e3b341; }
 .red-sub   { background: #2e1a1a; color: #f78166; }
-
 .status-row { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
 .pill { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: 500; }
 .pill-on  { background: #1a2e1a; color: #3fb950; border: 0.5px solid #2d5a2d; }
 .pill-off { background: #21262d; color: #8b949e; border: 0.5px solid #30363d; }
-
 .sec-title { font-size: 18px; font-weight: 500; color: #e6edf3; grid-column: 1/-1; padding: 2px 0 0 2px; display: flex; align-items: center; gap: 10px; }
 .sec-title small { font-size: 12px; font-weight: 400; color: #8b949e; }
 .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #f85149; animation: blink 1.4s infinite; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
 .divider { grid-column: 1/-1; height: 0.5px; background: #30363d; }
-
 .timeline { padding: 10px 12px; }
 .tl-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
 .tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
 .tl-text { font-size: 11px; color: #8b949e; line-height: 1.4; }
 .tl-time { font-size: 10px; color: #6e7681; margin-top: 2px; }
 </style>
-
+</head>
+<body>
 <div class="db">
   <div class="sec-title">
     <div class="rec-dot"></div>
@@ -79,7 +75,7 @@ body { font-family: var(--font-sans); }
       <span class="badge badge-live">● REC</span>
     </div>
     <div class="feed-box">
-      <img class="feed-img" src="/mnt/user-data/uploads/1_093_1_-_frame_at_0m17s.jpg" alt="Live drone feed" />
+      <img class="feed-img" src="live.jpg" alt="Live drone feed" />
       <svg class="feed-overlay" viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg">
         <rect x="215" y="55" width="46" height="76" rx="2" fill="none" stroke="#3fb950" stroke-width="1.2"/>
         <text x="215" y="50" fill="#3fb950" font-size="8" font-family="monospace">P1</text>
@@ -112,7 +108,7 @@ body { font-family: var(--font-sans); }
       <span class="badge badge-proc">PROCESSING</span>
     </div>
     <div class="img-panel">
-      <img src="/mnt/user-data/uploads/1_093_1_-_frame_at_0m17s_Overlay.jpg" alt="3D mesh overlay" />
+      <img src="mesh.jpg" alt="3D mesh overlay" />
     </div>
     <div class="acc-bar-wrap">
       <div style="font-size:10px;color:#8b949e;margin-bottom:8px;">Per-person mesh confidence</div>
@@ -146,7 +142,7 @@ body { font-family: var(--font-sans); }
       <span class="badge badge-mesh">GEOMETRIC</span>
     </div>
     <div class="img-panel" style="height:220px;">
-      <img src="/mnt/user-data/uploads/Figures-Copy_of_Mesh_Features_-_1.jpg" alt="Mesh feature map" style="background:#fff;" />
+      <img src="features.jpg" alt="Mesh feature map" style="background:#fff;" />
     </div>
     <div class="timeline">
       <div style="font-size:10px;color:#8b949e;margin-bottom:8px;">Inter-person feature links</div>
@@ -194,3 +190,5 @@ body { font-family: var(--font-sans); }
     </div>
   </div>
 </div>
+</body>
+</html>
