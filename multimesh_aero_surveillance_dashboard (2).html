@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MultiMesh-Aero Surveillance Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
+.db { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 12px; min-height: 100vh; }
+.panel { background: #161b22; border: 0.5px solid #30363d; border-radius: 8px; overflow: hidden; }
+.panel-hd { padding: 8px 12px; border-bottom: 0.5px solid #30363d; display: flex; align-items: center; gap: 8px; }
+.panel-hd .dot { width: 8px; height: 8px; border-radius: 50%; }
+.panel-hd .dot.live { background: #3fb950; }
+.panel-hd .dot.proc { background: #388bfd; }
+.panel-hd .dot.mesh { background: #f78166; }
+.panel-hd span { font-size: 11px; font-weight: 500; color: #8b949e; letter-spacing: 0.06em; text-transform: uppercase; }
+.panel-hd .badge { margin-left: auto; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.badge-live { background: #1a2e1a; color: #3fb950; border: 0.5px solid #2d5a2d; }
+.badge-proc { background: #1a1e2e; color: #388bfd; border: 0.5px solid #2d3a5a; }
+.badge-mesh { background: #2e1a1a; color: #f78166; border: 0.5px solid #5a2d2d; }
+.feed-box { position: relative; height: 220px; background: #0d1117; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.feed-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.92; }
+.feed-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+.metric { background: #0d1117; border-radius: 6px; padding: 8px 10px; border: 0.5px solid #30363d; }
+.metric .val { font-size: 20px; font-weight: 500; color: #e6edf3; line-height: 1; }
+.metric .lbl { font-size: 10px; color: #8b949e; margin-top: 4px; }
+.metric .trend { font-size: 10px; color: #3fb950; margin-top: 2px; }
+.img-panel { height: 240px; background: #0d1117; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.img-panel img { width: 100%; height: 100%; object-fit: contain; background: #0d1117; }
+.acc-bar-wrap { padding: 10px 12px; }
+.acc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.acc-label { font-size: 11px; color: #8b949e; width: 100px; flex-shrink: 0; }
+.acc-bar-bg { flex: 1; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+.acc-bar { height: 100%; border-radius: 4px; }
+.acc-val { font-size: 11px; color: #e6edf3; font-weight: 500; width: 42px; text-align: right; flex-shrink: 0; }
+.bottom-row { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+.stat-card { background: #161b22; border: 0.5px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+.stat-card .num { font-size: 26px; font-weight: 500; color: #e6edf3; }
+.stat-card .desc { font-size: 11px; color: #8b949e; margin-top: 4px; }
+.stat-card .sub { font-size: 11px; margin-top: 6px; padding: 2px 6px; border-radius: 3px; display: inline-block; }
+.green-sub { background: #1a2e1a; color: #3fb950; }
+.blue-sub  { background: #1a1e2e; color: #388bfd; }
+.orange-sub{ background: #2e2118; color: #e3b341; }
+.red-sub   { background: #2e1a1a; color: #f78166; }
+.status-row { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
+.pill { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: 500; }
+.pill-on  { background: #1a2e1a; color: #3fb950; border: 0.5px solid #2d5a2d; }
+.pill-off { background: #21262d; color: #8b949e; border: 0.5px solid #30363d; }
+.sec-title { font-size: 18px; font-weight: 500; color: #e6edf3; grid-column: 1/-1; padding: 2px 0 0 2px; display: flex; align-items: center; gap: 10px; }
+.sec-title small { font-size: 12px; font-weight: 400; color: #8b949e; }
+.rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #f85149; animation: blink 1.4s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.divider { grid-column: 1/-1; height: 0.5px; background: #30363d; }
+.timeline { padding: 10px 12px; }
+.tl-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.tl-text { font-size: 11px; color: #8b949e; line-height: 1.4; }
+.tl-time { font-size: 10px; color: #6e7681; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="db">
+  <div class="sec-title">
+    <div class="rec-dot"></div>
+    MultiMesh-Aero Surveillance Dashboard
+    <small>UAV-based multi-person activity recognition</small>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="dot live"></div>
+      <span>Live feed</span>
+      <span class="badge badge-live">● REC</span>
+    </div>
+    <div class="feed-box">
+      <img class="feed-img" src="live.jpg" alt="Live drone feed" />
+      <svg class="feed-overlay" viewBox="0 0 500 220" xmlns="http://www.w3.org/2000/svg">
+        <rect x="215" y="55" width="46" height="76" rx="2" fill="none" stroke="#3fb950" stroke-width="1.2"/>
+        <text x="215" y="50" fill="#3fb950" font-size="8" font-family="monospace">P1</text>
+        <rect x="95" y="150" width="44" height="80" rx="2" fill="none" stroke="#388bfd" stroke-width="1.2"/>
+        <text x="95" y="147" fill="#388bfd" font-size="8" font-family="monospace">P2</text>
+        <rect x="265" y="165" width="44" height="80" rx="2" fill="none" stroke="#e3b341" stroke-width="1.2"/>
+        <text x="265" y="162" fill="#e3b341" font-size="8" font-family="monospace">P3</text>
+        <rect x="290" y="100" width="44" height="80" rx="2" fill="none" stroke="#f78166" stroke-width="1.2"/>
+        <text x="290" y="97" fill="#f78166" font-size="8" font-family="monospace">P4</text>
+        <text x="6" y="14" fill="#8b949e" font-size="9" font-family="monospace">ALT 45m  |  FOV 82°  |  CAM-01</text>
+        <text x="380" y="14" fill="#f85149" font-size="9" font-family="monospace">00:17</text>
+      </svg>
+    </div>
+    <div class="metric-row">
+      <div class="metric"><div class="val">4</div><div class="lbl">Persons detected</div></div>
+      <div class="metric"><div class="val">93.8%</div><div class="lbl">Recognition acc.</div><div class="trend">MOD20 benchmark</div></div>
+    </div>
+    <div class="status-row">
+      <span class="pill pill-on">Multi-SNET active</span>
+      <span class="pill pill-on">MaxViT running</span>
+      <span class="pill pill-off">LoFTR idle</span>
+      <span class="pill pill-on">TAPIR tracking</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="dot proc"></div>
+      <span>3D mesh construction</span>
+      <span class="badge badge-proc">PROCESSING</span>
+    </div>
+    <div class="img-panel">
+      <img src="mesh.jpg" alt="3D mesh overlay" />
+    </div>
+    <div class="acc-bar-wrap">
+      <div style="font-size:10px;color:#8b949e;margin-bottom:8px;">Per-person mesh confidence</div>
+      <div class="acc-row">
+        <span class="acc-label">P1 — standing</span>
+        <div class="acc-bar-bg"><div class="acc-bar" style="width:91%;background:#388bfd;"></div></div>
+        <span class="acc-val">91%</span>
+      </div>
+      <div class="acc-row">
+        <span class="acc-label">P2 — throwing</span>
+        <div class="acc-bar-bg"><div class="acc-bar" style="width:87%;background:#3fb950;"></div></div>
+        <span class="acc-val">87%</span>
+      </div>
+      <div class="acc-row">
+        <span class="acc-label">P3 — walking</span>
+        <div class="acc-bar-bg"><div class="acc-bar" style="width:94%;background:#e3b341;"></div></div>
+        <span class="acc-val">94%</span>
+      </div>
+      <div class="acc-row">
+        <span class="acc-label">P4 — standing</span>
+        <div class="acc-bar-bg"><div class="acc-bar" style="width:89%;background:#f78166;"></div></div>
+        <span class="acc-val">89%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="dot mesh"></div>
+      <span>Mesh feature map</span>
+      <span class="badge badge-mesh">GEOMETRIC</span>
+    </div>
+    <div class="img-panel" style="height:220px;">
+      <img src="features.jpg" alt="Mesh feature map" style="background:#fff;" />
+    </div>
+    <div class="timeline">
+      <div style="font-size:10px;color:#8b949e;margin-bottom:8px;">Inter-person feature links</div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#a371f7;"></div>
+        <div><div class="tl-text">P1 ↔ P3 — intra-skeleton joint correlation</div><div class="tl-time">dashed purple — high confidence</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#388bfd;"></div>
+        <div><div class="tl-text">P2 ↔ P4 — spatial proximity link</div><div class="tl-time">dashed blue — moderate confidence</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#3fb950;"></div>
+        <div><div class="tl-text">P1/P2 ↔ P3/P4 — cross-group interaction</div><div class="tl-time">dashed green — motion trajectory</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:#e3b341;"></div>
+        <div><div class="tl-text">P3 ↔ P4 — object hand-off detected</div><div class="tl-time">dashed amber — action cue</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="bottom-row">
+    <div class="stat-card">
+      <div class="num">93.8%</div>
+      <div class="desc">MOD20 accuracy</div>
+      <span class="sub green-sub">SOTA outperformed</span>
+    </div>
+    <div class="stat-card">
+      <div class="num">86.4%</div>
+      <div class="desc">UAV-Human (20-class)</div>
+      <span class="sub blue-sub">Benchmark verified</span>
+    </div>
+    <div class="stat-card">
+      <div class="num">89.4%</div>
+      <div class="desc">CHAD dataset</div>
+      <span class="sub orange-sub">3 benchmarks passed</span>
+    </div>
+    <div class="stat-card">
+      <div class="num">4 / 4</div>
+      <div class="desc">Persons tracked</div>
+      <span class="sub red-sub">TAPIR long-range</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
